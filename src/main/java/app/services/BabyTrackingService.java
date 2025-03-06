@@ -1,7 +1,7 @@
 package app.services;
 
-import app.controllers.DatabaseController;
 import app.models.BabyTrackingEntry;
+import app.controllers.DatabaseController;
 import java.util.List;
 
 public class BabyTrackingService {
@@ -11,18 +11,12 @@ public class BabyTrackingService {
         this.dbController = dbController;
     }
 
-    // ✅ Hent alle baby-tracking entries
-    public List<BabyTrackingEntry> getAllEntries() {
-        return dbController.getAllBabyEntries();
+    // ✅ Opdateret metode: Forventer nu et BabyTrackingEntry-objekt
+    public void addEntry(BabyTrackingEntry entry) {
+        dbController.saveEntry(entry); // Gemmer objektet direkte i databasen
     }
 
-    // ✅ Tilføj en ny entry til databasen
-    public void addEntry(String jsonEntry) {
-        try {
-            BabyTrackingEntry entry = BabyTrackingEntry.fromJson(jsonEntry);
-            dbController.saveEntry(entry);
-        } catch (Exception e) {
-            System.err.println("❌ Fejl ved tilføjelse af entry: " + e.getMessage());
-        }
+    public List<BabyTrackingEntry> getAllEntries() {
+        return dbController.getAllBabyEntries();
     }
 }

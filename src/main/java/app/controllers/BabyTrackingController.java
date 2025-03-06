@@ -1,26 +1,25 @@
 package app.controllers;
 
+import app.models.BabyTrackingEntry;
 import app.services.BabyTrackingService;
 import app.utils.RequestParser;
-import app.controllers.DatabaseController;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import com.fasterxml.jackson.databind.JsonNode;
 
 public class BabyTrackingController {
     private final BabyTrackingService babyTrackingService;
     private final RequestParser requestParser;
-    private final DatabaseController dbController;
 
-    public BabyTrackingController(BabyTrackingService babyTrackingService, RequestParser requestParser, DatabaseController dbController) {
+    public BabyTrackingController(BabyTrackingService babyTrackingService, RequestParser requestParser) {
         this.babyTrackingService = babyTrackingService;
         this.requestParser = requestParser;
-        this.dbController = dbController;
     }
 
     public void registerRoutes(Javalin app) {
         app.get("/babytracking", this::getAllEntries);
         app.post("/babytracking", this::addEntry);
+        app.post("/amning", this::addBreastfeedingEntry); // ✅ Route til amning
+        app.get("/debug/amning", this::debugAmningEntries); // ✅ Debug route til at se gemte entries
     }
 
     private void getAllEntries(Context ctx) {
@@ -30,17 +29,34 @@ public class BabyTrackingController {
     private void addEntry(Context ctx) {
         try {
             String body = ctx.body();
-            JsonNode jsonNode = RequestParser.parseJson(body);
+            System.out.println("DEBUG: Modtaget JSON fra frontend -> " + body); // 🔍 Debug input JSON
 
-            if (!RequestParser.validateBabyTrackingEntry(jsonNode)) {
-                ctx.status(400).result("❌ Invalid JSON format: Missing required fields.");
-                return;
-            }
+            BabyTrackingEntry entry = BabyTrackingEntry.fromJson(body);
+            babyTrackingService.addEntry(entry);
 
-            babyTrackingService.addEntry(body);
             ctx.status(201).result("✅ Entry successfully added!");
         } catch (Exception e) {
-            ctx.status(400).result("❌ Error processing request: " + e.getMessage());
+            System.err.println("❌ Fejl ved parsing af JSON: " + e.getMessage()); // 🔍 Debug fejl
+            ctx.status(400).result("❌ Fejl ved gemning af entry: " + e.getMessage());
         }
+    }
+
+    private void addBreastfeedingEntry(Context ctx) {
+        try {
+            String body = ctx.body();
+            System.out.println("DEBUG: Modtaget JSON fra frontend -> " + body); // 🔍 Debug input JSON
+
+            BabyTrackingEntry entry = BabyTrackingEntry.fromJson(body);
+            babyTrackingService.addEntry(entry);
+
+            ctx.status(201).result("✅ Amning entry gemt!");
+        } catch (Exception e) {
+            System.err.println("❌ Fejl ved parsing af JSON: " + e.getMessage()); // 🔍 Debug fejl
+            ctx.status(400).result("❌ Fejl ved gemning af amning: " + e.getMessage());
+        }
+    }
+
+    private void debugAmningEntries(Context ctx) {
+        ctx.json(babyTrackingService.getAllEntries()); // ✅ Returnerer alle entries som JSON
     }
 }

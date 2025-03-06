@@ -1,32 +1,47 @@
-document.getElementById("trackingForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
+document.getElementById("amningForm").addEventListener("submit", async function(event) {
+    event.preventDefault(); // Forhindrer siden i at reloade
+
+    const startTime = document.getElementById("startTime").value + ":00";
+    const endTime = document.getElementById("endTime").value + ":00";
+    const leftBreastTime = parseInt(document.getElementById("leftBreastTime").value) || 0;
+    const rightBreastTime = parseInt(document.getElementById("rightBreastTime").value) || 0;
+    const lastBreastUsed = document.getElementById("lastBreastUsed").value;
+
+    const totalTime = leftBreastTime + rightBreastTime; // Beregn samlet amningstid
 
     const entry = {
-        type: document.getElementById("type").value,
-        value: document.getElementById("value").value,
-        time: document.getElementById("time").value
+        type: "Amning",
+        startTime: startTime,
+        endTime: endTime,
+        totalTime: totalTime,
+        leftBreastTime: leftBreastTime,
+        rightBreastTime: rightBreastTime,
+        lastBreastUsed: lastBreastUsed
     };
 
-    await fetch("/babytracking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry)
-    });
+    console.log("DEBUG: Data sendt til serveren ->", JSON.stringify(entry)); // 🔍 Debug JSON
 
-    loadEntries();
+    try {
+        const response = await fetch("/amning", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(entry)
+        });
+
+        console.log("DEBUG: Server-respons status ->", response.status); // 🔍 Debug status
+
+        if (response.ok) {
+            console.log("✅ Amning registreret!");
+            alert("✅ Amning registreret!");
+            document.getElementById("amningForm").reset(); // Ryd formularen efter succes
+        } else {
+            const errorText = await response.text();
+            console.error("❌ Fejl fra serveren:", errorText); // 🔍 Debug fejl fra serveren
+            alert("❌ Fejl: " + errorText);
+        }
+    } catch (error) {
+        console.error("❌ Fejl:", error);
+    }
 });
-
-async function loadEntries() {
-    const response = await fetch("/babytracking");
-    const entries = await response.json();
-
-    const entriesList = document.getElementById("entries");
-    entriesList.innerHTML = "";
-    entries.forEach(entry => {
-        const li = document.createElement("li");
-        li.textContent = `${entry.time}: ${entry.type} - ${entry.value}`;
-        entriesList.appendChild(li);
-    });
-}
-
-loadEntries();

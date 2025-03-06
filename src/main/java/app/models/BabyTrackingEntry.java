@@ -1,31 +1,96 @@
 package app.models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
+
 public class BabyTrackingEntry {
-    private String type;  // "sleep", "feed", "diaper"
-    private String value; // "Højre bryst", "2 timer", "Tis + afføring"
-    private String time;  // ISO 8601 format: "2024-02-27T14:30:00"
+    private String type;
 
-    public BabyTrackingEntry() {}
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "UTC")
+    private LocalDateTime startTime;
 
-    public BabyTrackingEntry(String type, String value, String time) {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "UTC")
+    private LocalDateTime endTime;
+
+    private int totalTime;
+    private int leftBreastTime;
+    private int rightBreastTime;
+    private String lastBreastUsed;
+
+    // ✅ Standard constructor (Jackson kræver dette)
+    public BabyTrackingEntry() {
+    }
+
+    // ✅ Constructor med Jackson-annotationer
+    @JsonCreator
+    public BabyTrackingEntry(
+            @JsonProperty("type") String type,
+            @JsonProperty("startTime") LocalDateTime startTime,
+            @JsonProperty("endTime") LocalDateTime endTime,
+            @JsonProperty("totalTime") int totalTime,
+            @JsonProperty("leftBreastTime") int leftBreastTime,
+            @JsonProperty("rightBreastTime") int rightBreastTime,
+            @JsonProperty("lastBreastUsed") String lastBreastUsed) {
         this.type = type;
-        this.value = value;
-        this.time = time;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.totalTime = totalTime;
+        this.leftBreastTime = leftBreastTime;
+        this.rightBreastTime = rightBreastTime;
+        this.lastBreastUsed = lastBreastUsed;
     }
 
-    public String getType() { return type; }
-    public String getValue() { return value; }
-    public String getTime() { return time; }
-
+    // ✅ Metode til at parse JSON til et objekt
     public static BabyTrackingEntry fromJson(String json) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, BabyTrackingEntry.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule()); // 💡 Tilføj support for Java 8 time
+        return objectMapper.readValue(json, BabyTrackingEntry.class);
     }
 
+    // ✅ Getters (Jackson bruger disse til at serialisere objektet)
+    public String getType() {
+        return type;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public int getTotalTime() {
+        return totalTime;
+    }
+
+    public int getLeftBreastTime() {
+        return leftBreastTime;
+    }
+
+    public int getRightBreastTime() {
+        return rightBreastTime;
+    }
+
+    public String getLastBreastUsed() {
+        return lastBreastUsed;
+    }
+
+    // ✅ Tilføj en `toString()` metode til debugging
     @Override
     public String toString() {
-        return "BabyTrackingEntry{type='" + type + "', value='" + value + "', time='" + time + "'}";
+        return "BabyTrackingEntry{" +
+                "type='" + type + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", totalTime=" + totalTime +
+                ", leftBreastTime=" + leftBreastTime +
+                ", rightBreastTime=" + rightBreastTime +
+                ", lastBreastUsed='" + lastBreastUsed + '\'' +
+                '}';
     }
 }

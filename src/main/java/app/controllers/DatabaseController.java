@@ -2,6 +2,8 @@ package app.controllers;
 
 import app.models.BabyTrackingEntry;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.LocalDateTime;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,16 +46,27 @@ public class DatabaseController {
     // ✅ Metode til at hente alle baby-tracking entries
     public List<BabyTrackingEntry> getAllBabyEntries() {
         List<BabyTrackingEntry> entries = new ArrayList<>();
-        String sql = "SELECT * FROM baby_tracking ORDER BY time DESC";
+        String sql = "SELECT * FROM baby_tracking ORDER BY start_time DESC";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
+                Timestamp startTimestamp = rs.getTimestamp("start_time");
+                Timestamp endTimestamp = rs.getTimestamp("end_time");
+
+                // ✅ Konverter kun hvis værdien ikke er null
+                LocalDateTime startTime = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
+                LocalDateTime endTime = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
+
                 BabyTrackingEntry entry = new BabyTrackingEntry(
                         rs.getString("type"),
-                        rs.getString("value"),
-                        rs.getTimestamp("time").toLocalDateTime().toString()
+                        startTime,
+                        endTime,
+                        rs.getInt("total_time"),
+                        rs.getInt("left_breast_time"),
+                        rs.getInt("right_breast_time"),
+                        rs.getString("last_breast_used")
                 );
                 entries.add(entry);
             }
@@ -63,19 +76,29 @@ public class DatabaseController {
         return entries;
     }
 
-    // ✅ Metode til at gemme en baby-tracking entry i databasen
+
+
+
+
+    // ✅ Gem en amnings-entry i databasen
     public void saveEntry(BabyTrackingEntry entry) {
-        String sql = "INSERT INTO baby_tracking (type, value, time) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO baby_tracking (type, value, start_time, end_time, total_time, left_breast_time, right_breast_time, last_breast_used) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, entry.getType());
-            stmt.setString(2, entry.getValue());
-            stmt.setTimestamp(3, Timestamp.valueOf(entry.getTime()));
+            stmt.setString(2, "amning-data"); // Dummy værdi for at undgå NULL-fejl
+            stmt.setTimestamp(3, Timestamp.valueOf(entry.getStartTime()));
+            stmt.setTimestamp(4, Timestamp.valueOf(entry.getEndTime()));
+            stmt.setInt(5, entry.getTotalTime());
+            stmt.setInt(6, entry.getLeftBreastTime());
+            stmt.setInt(7, entry.getRightBreastTime());
+            stmt.setString(8, entry.getLastBreastUsed());
 
             stmt.executeUpdate();
-            System.out.println("✅ Entry saved: " + entry);
+            System.out.println("✅ Amning entry saved: " + entry);
         } catch (SQLException e) {
             System.err.println("❌ Error saving entry: " + e.getMessage());
         }
     }
+
 }

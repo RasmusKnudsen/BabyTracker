@@ -33,6 +33,12 @@
             <version>2.0.7</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.0</version> <!-- Sørg for at bruge den version, der er kompatibel med din Jackson-version -->
+        </dependency>
+
+        <dependency>
 
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
